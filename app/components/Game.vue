@@ -15,10 +15,10 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
-import SmallBoard from '@/components/SmallBoard.vue';
-import TicTacToeBoard from '@/components/TicTacToeBoard.vue';
-import { useGameStore } from '@/stores/gamemanager';
-import { useGameSocket } from '@/composables/useGameSocket';
+import SmallBoard from '../components/SmallBoard.vue';
+import TicTacToeBoard from '../components/TicTacToeBoard.vue';
+import { useGameStore } from '../stores/gamemanager';
+import { useGameSocket } from '../composables/useGameSocket';
 
 const socket = useGameSocket();
 const {requestReset} = socket;

@@ -1,5 +1,6 @@
 
 import { useWebSocket } from "@vueuse/core";
+import { toast } from "vue-sonner";
 
 type GameId = string;
 type PlayerName = string;
@@ -40,24 +41,31 @@ export function useGameSocket() {
 
     watch(data, (newData) => {
         const message = JSON.parse(newData);
+        if (message.type === 'error') {
+            toast.error(message.message);
+        }
         if (message.type === 'moveConfirmed') {
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
         }
         if (message.type === 'boardReset') {
             console.log("board reset")
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+            toast.info('Board reset');
         }
         if (message.type === 'playerJoined') {
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
             console.log(message.playerName + ' joined the game');
+            toast.success(`${message.playerName} joined the game`);
         }
         if (message.type === 'playerLeft') {
             console.log(message.playerName + ' left the game');
+            toast.info(`${message.playerName} left the game`);
         }
         if (message.type === 'gameStarted') {
             console.log('Game started');
             console.log(message.board)
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+            toast.success('Game started!');
         }
         if (message.type === 'identity') {
             console.log('Identity received: ' + message.playerId);
@@ -65,6 +73,7 @@ export function useGameSocket() {
         }
         if (message.type === 'gameOver') {
             console.log('Game over');
+            toast.success('Game Over!');
         }
 
         // CREATE AND JOIN GAME SHOULD BE HANDELED AND SYNC BOARD STATE?

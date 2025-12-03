@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia';
 import SmallCell from './SmallCell.vue';
 import { computed } from 'vue';
-import { useGameStore } from '@/stores/gamemanager';
+import { useGameStore } from '../stores/gamemanager';
 import type { SmallBoardDto } from '~~/types/game';
 
 const props = defineProps<{ board: SmallBoardDto }>();
