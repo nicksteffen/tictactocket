@@ -1,8 +1,5 @@
 <template>
     <div class="board-page">
-
-        <Lobby />
-
         <div class="board-container">
             <TicTacToeBoard>
                 <SmallBoard 
@@ -22,6 +19,7 @@ import SmallBoard from '@/components/SmallBoard.vue';
 import TicTacToeBoard from '@/components/TicTacToeBoard.vue';
 import { useGameStore } from '@/stores/gamemanager';
 import { useGameSocket } from '@/composables/useGameSocket';
+
 const socket = useGameSocket();
 const {requestReset} = socket;
 const gameStore = useGameStore();
@@ -32,7 +30,6 @@ function reset() {
     if (!gameId.value) return;
     requestReset(gameId.value);
 }
-
 </script>
 
 <style scoped>
