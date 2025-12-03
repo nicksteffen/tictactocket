@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 
 
-import type { boardState, smallBoardState } from '../../types/index';
+import type { SmallBoardDto, UltimateBoardDto } from '~~/types/game';
 
 
 const { data, send } = useWebSocket('ws://localhost:3000/api/gameSocket');
@@ -33,7 +33,7 @@ function requestReset(gameId: string) {
 
 export const useBoardStore = defineStore('board', {
     state: () => ({
-        boardState: {} as boardState,
+        boardState: {} as UltimateBoardDto,
         currentPlayer: 1,
         nextBoard: -1,
         gameId: '',
@@ -50,7 +50,7 @@ export const useBoardStore = defineStore('board', {
         setPlayerId(playerId: number) {
             this.playerId = playerId;
         },
-        syncBoardState(boardState: boardState, nextBoard: number, currentPlayer: number) {
+        syncBoardState(boardState: UltimateBoardDto, nextBoard: number, currentPlayer: number) {
             // todo, I think this should be called sync Game State
             console.log("sync in actions")
             this.boardState = boardState;

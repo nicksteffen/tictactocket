@@ -1,5 +1,4 @@
-import type { boardState, smallBoardState } from '../../types/index';
-import { checkIfWon } from '../../utils/winning';
+import { UltimateBoard } from '../domain/UltimateBoard';
 
 interface ServerGameState {
     gameId: string;
@@ -9,7 +8,7 @@ interface ServerGameState {
             peer: any; // Peer type is not easily available here
         }
     };
-    board: boardState | null;
+    board: UltimateBoard;
     currentPlayer: number;
     nextBoard: number;
 }
@@ -17,103 +16,19 @@ interface ServerGameState {
 const gameManager = new Map<string, ServerGameState>();
 
 
-const initializeBoard = () => {
-    return {
-        boards: Array.from({ length: 9 }, (_, index: number) => initializeSmallBoard(index)),
-        winner: 0,
-        maxRows: 3,
-        maxCols: 3,
-    };
-}
-
-
-
-function initializeSmallBoard(index: number) {
-    return {
-        board: Array.from({ length: 9 }, () => 0),
-        isAvailable: true,
-        winner: 0,
-        maxRows: 3,
-        maxCols: 3,
-        index: index,
-    };
-
-}
-
-function checkIfSmallBoardDraw(smallBoard: smallBoardState) {
-    // we know the small board is not a winner
-    const isBoardFull = smallBoard.board.every((cell) => cell !== 0);
-    if (isBoardFull) {
-        smallBoard.isAvailable = false;
+// this could be moved to domain for GameState?
+function validateMove(game: ServerGameState, index: number, boardId: number, playerId: number) {
+    if (playerId !== game.currentPlayer) {
+        throw new Error(`Invalid move: Player ${playerId} is not the current player.`);
     }
-    return isBoardFull;
-}
-
-function checkIfSmallBoardWin(smallBoard: smallBoardState, target: number) {
-
-    if (smallBoard) {
-        const winner = checkIfWon(smallBoard.board, target);
-        if (winner) {
-            smallBoard.winner = target;
-            smallBoard.isAvailable = false;
-        }
-        return winner;
+    try {
+        game.board.boards[boardId].validateMove(index, boardId);
+    } catch (error) {
+        throw error;
     }
-    return false
-}
-
-const checkGameWon = (board: boardState, target: number) => {
-    const overallBoard = board.boards.map((board) => board.winner);
-    const winner = checkIfWon(overallBoard, target);
-    if (winner) {
-        board.winner = target;
-        return true;
-    }
-    return false;
-}
-
-function updateBoard(move: any, board: boardState) {
-    const smallBoard = board.boards[move.boardId];
-    console.log("update board")
-    smallBoard.board[move.index] = move.target;
-    const winner = checkIfSmallBoardWin(smallBoard, move.target);
-    if (winner) {
-        checkGameWon(board, move.target);
-    } else {
-        checkIfSmallBoardDraw(smallBoard);
-    }
-
-    return board;
-}
-
-function getNextBoard(moveIndex: number, board: boardState) {
-    const targetNextBoard = board.boards[moveIndex];
-    if (targetNextBoard.isAvailable) {
-        return moveIndex;
-    } else {
-        return -1
-    }
-}
-
-function validateMove(smallBoard: smallBoardState, index: number, boardId: number, nextBoard: number) {
-    // todo, return the error messages and a false, so we can send the error back to our peer
-
-    if (!smallBoard) {
-        throw new Error('Invalid board: Board ID not found.');
-    }
-
-    // Check if the board is available for play
-    if (!smallBoard.isAvailable) {
-        throw new Error('Invalid move: This board is not available for play.');
-    }
-
     // Enforce nextBoard restrictions
-    if (nextBoard !== -1 && nextBoard !== boardId) {
-        throw new Error(`Invalid move: You must play in board ${nextBoard}.`);
-    }
-
-    if (smallBoard.board[index] !== 0) {
-        throw new Error('Invalid move: Cell is already occupied.');
+    if (game.nextBoard !== -1 && game.nextBoard !== boardId) {
+        throw new Error(`Invalid move: You must play in board ${game.nextBoard}.`);
     }
 
 }
@@ -126,6 +41,8 @@ function handleJoin(peer: any, data: any) {
     // for now, set the joining player as player 2. in the future, check for player 2 existing, then this player becomes spectator
     // maybe this can be player role
     const playerId = 2;
+    // todo, search for player id in the game.get
+    // if found, return the player role or something, else 2 or 3 or whatever?
 
     const game = gameManager.get(gameId);
     console.log(game)
@@ -139,7 +56,7 @@ function handleJoin(peer: any, data: any) {
             type: 'playerJoined',
             gameId,
             playerName,
-            board: game.board,
+            board: game.board.getUltimateBoardDto(),
             currentPlayer: game.currentPlayer,
             nextBoard: game.nextBoard
         });
@@ -173,7 +90,8 @@ function handleCreate(peer: any, data: any) {
                 peer: peer
             }
         },
-        board: initializeBoard(),
+        board: new UltimateBoard(),
+        // board: initializeBoard(),
         currentPlayer: playerId,
         nextBoard: -1,
     };
@@ -184,7 +102,7 @@ function handleCreate(peer: any, data: any) {
         type: 'gameStarted',
         gameId,
         playerName,
-        board: newGame.board,
+        board: newGame.board.getUltimateBoardDto(),
         currentPlayer: newGame.currentPlayer,
         nextBoard: newGame.nextBoard
     });
@@ -198,27 +116,23 @@ function handleMove(peer: any, data: any) {
     const playerId = move.playerId;
     const game = gameManager.get(gameId);
     if (game && game.board) {
-        if (playerId !== game.currentPlayer) {
-            console.log('Invalid player: Player ID does not match current player.');
-            return;
-        }
         try {
-            validateMove(game.board.boards[move.boardId], move.index, move.boardId, game.nextBoard);
+            validateMove(game, move.index, move.boardId, move.playerId);
         } catch (e) {
             console.log(e);
             return;
         }
 
-        game.board = updateBoard(move, game.board);
-        console.log("player id is: " + playerId);
+        game.board.update(move.boardId, move.index, move.target);
+        console.log(game.board)
         game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
-        game.nextBoard = getNextBoard(move.index, game.board);
+        game.nextBoard = game.board.getNextBoard(move.index)
         const message = JSON.stringify({
             type: 'moveConfirmed',
             gameId,
             playerId,
             move,
-            board: game.board,
+            board: game.board.getUltimateBoardDto(),
             nextBoard: game.nextBoard,
             currentPlayer: game.currentPlayer
         });
@@ -234,13 +148,13 @@ function handleReset(peer: any, data: any) {
     const gameId = data.gameId;
     const game = gameManager.get(gameId);
     if (game) {
-        game.board = initializeBoard();
+        game.board = new UltimateBoard();
         game.currentPlayer = 1;
         game.nextBoard = -1;
         const message = JSON.stringify({
             type: 'boardReset',
             gameId,
-            board: game.board,
+            board: game.board.getUltimateBoardDto(),
             currentPlayer: game.currentPlayer,
             nextBoard: game.nextBoard
         });
