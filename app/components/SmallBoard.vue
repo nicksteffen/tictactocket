@@ -3,10 +3,10 @@ import { useBoardStore } from '@/stores/board';
 import { storeToRefs } from 'pinia';
 import SmallCell from './SmallCell.vue';
 import { computed } from 'vue';
-import type { smallBoardState } from '~~/types';
+import type { SmallBoardDto } from '~~/types/game';
 import { useGameStore } from '@/stores/gamemanager';
 
-const props = defineProps<{ board: smallBoardState }>();
+const props = defineProps<{ board: SmallBoardDto }>();
 const boardStore = useBoardStore();
 const gameStore = useGameStore();
 const { nextBoard } = storeToRefs(boardStore);
