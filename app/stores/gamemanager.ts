@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia';
-import type { boardState } from '~~/types';
+import type { UltimateBoardDto } from '~~/types/game';
 
 
 export interface gameState {
     gameId: string;
     playerName: string;
-    board: boardState;
+    board: UltimateBoardDto;
 
 }
 
@@ -21,14 +21,14 @@ export const useGameStore = defineStore('game', {
             this.game = {
                 gameId: gameId,
                 playerName: playerName,
-                board: {} as boardState,
+                board: {} as UltimateBoardDto,
             };
         },
         joinGame(gameId: string, playerName: string) {
             this.game = {
                 gameId: gameId,
                 playerName: playerName,
-                board: {} as boardState,
+                board: {} as UltimateBoardDto,
             };
         }
     }
