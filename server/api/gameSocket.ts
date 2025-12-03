@@ -1,4 +1,5 @@
 import type { boardState, smallBoardState } from '../../types/index';
+import { checkIfWon } from '../../utils/winning';
 
 interface ServerGameState {
     gameId: string;
@@ -26,37 +27,6 @@ const initializeBoard = () => {
 }
 
 
-const WINNING_STATES = [
-    [0, 1, 2], // Top row
-    [3, 4, 5], // Middle row
-    [6, 7, 8], // Bottom row
-    [0, 3, 6], // Left column
-    [1, 4, 7], // Middle column
-    [2, 5, 8], // Right column
-    [0, 4, 8], // Diagonal top-left to bottom-right
-    [2, 4, 6], // Diagonal top-right to bottom-left
-];
-
-/**
- * Checks if a specific win condition is met on the board
- * @param board - The board array to check
- * @param winCondition - Array of indices representing a winning pattern
- * @param target - The player value to check for (1 or 2)
- * @returns true if all positions in the win condition match the target
- */
-function checkWinCondition(board: Number[], winCondition: number[], target: number): boolean {
-    return winCondition.every((index) => board[index] === target);
-}
-
-/**
- * Checks if a player has won on the given board
- * @param board - The board array to check
- * @param target - The player value to check for (1 or 2)
- * @returns true if the target player has won
- */
-function checkIfWon(board: Number[], target: number): boolean {
-    return WINNING_STATES.some(condition => checkWinCondition(board, condition, target));
-}
 
 function initializeSmallBoard(index: number) {
     return {
@@ -90,8 +60,6 @@ function checkIfSmallBoardWin(smallBoard: smallBoardState, target: number) {
         return winner;
     }
     return false
-
-
 }
 
 const checkGameWon = (board: boardState, target: number) => {
@@ -127,7 +95,7 @@ function getNextBoard(moveIndex: number, board: boardState) {
     }
 }
 
-function validateMove(smallBoard: smallBoardState, index: number,boardId: number, nextBoard: number) {
+function validateMove(smallBoard: smallBoardState, index: number, boardId: number, nextBoard: number) {
     // todo, return the error messages and a false, so we can send the error back to our peer
 
     if (!smallBoard) {
@@ -151,6 +119,139 @@ function validateMove(smallBoard: smallBoardState, index: number,boardId: number
 }
 
 
+function handleJoin(peer: any, data: any) {
+    console.log('Joining game ' + data.gameId);
+    const gameId = data.gameId;
+    const playerName = data.playerName;
+    // for now, set the joining player as player 2. in the future, check for player 2 existing, then this player becomes spectator
+    // maybe this can be player role
+    const playerId = 2;
+
+    const game = gameManager.get(gameId);
+    console.log(game)
+    if (game) {
+        game.players[playerId] = {
+            name: playerName,
+            peer: peer
+        };
+        peer.subscribe(gameId);
+        const message = JSON.stringify({
+            type: 'playerJoined',
+            gameId,
+            playerName,
+            board: game.board,
+            currentPlayer: game.currentPlayer,
+            nextBoard: game.nextBoard
+        });
+        peer.publish(gameId, message);
+        peer.send(message);
+    } else {
+        // Handle error or create? For now just log
+        console.log(`Game ${gameId} not found`);
+    }
+}
+
+function handleCreate(peer: any, data: any) {
+    if (gameManager.has(data.gameId)) {
+        const message = JSON.stringify({ type: 'error', message: 'Game already exists' });
+        console.log(`Game ${data.gameId} already exists`);
+        peer.publish(data.gameId, message);
+        peer.send(message);
+        return;
+    }
+    console.log('Creating game ' + data.gameId);
+    const gameId = data.gameId;
+    const playerName = data.playerName;
+    // game creator is player 1
+    const playerId = 1;
+
+    const newGame: ServerGameState = {
+        gameId,
+        players: {
+            [playerId]: {
+                name: playerName,
+                peer: peer
+            }
+        },
+        board: initializeBoard(),
+        currentPlayer: playerId,
+        nextBoard: -1,
+    };
+
+    gameManager.set(gameId, newGame);
+    peer.subscribe(gameId);
+    const message = JSON.stringify({
+        type: 'gameStarted',
+        gameId,
+        playerName,
+        board: newGame.board,
+        currentPlayer: newGame.currentPlayer,
+        nextBoard: newGame.nextBoard
+    });
+    peer.publish(gameId, message);
+    peer.send(message);
+}
+
+function handleMove(peer: any, data: any) {
+    const move = data.move
+    const gameId = move.gameId;
+    const playerId = move.playerId;
+    const game = gameManager.get(gameId);
+    if (game && game.board) {
+        if (playerId !== game.currentPlayer) {
+            console.log('Invalid player: Player ID does not match current player.');
+            return;
+        }
+        try {
+            validateMove(game.board.boards[move.boardId], move.index, move.boardId, game.nextBoard);
+        } catch (e) {
+            console.log(e);
+            return;
+        }
+
+        game.board = updateBoard(move, game.board);
+        console.log("player id is: " + playerId);
+        game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
+        game.nextBoard = getNextBoard(move.index, game.board);
+        const message = JSON.stringify({
+            type: 'moveConfirmed',
+            gameId,
+            playerId,
+            move,
+            board: game.board,
+            nextBoard: game.nextBoard,
+            currentPlayer: game.currentPlayer
+        });
+        peer.publish(gameId, message);
+        peer.send(message);
+    } else {
+        // Handle error or create? For now just log
+        console.log(`Game ${gameId} not found`);
+    }
+}
+
+function handleReset(peer: any, data: any) {
+    const gameId = data.gameId;
+    const game = gameManager.get(gameId);
+    if (game) {
+        game.board = initializeBoard();
+        game.currentPlayer = 1;
+        game.nextBoard = -1;
+        const message = JSON.stringify({
+            type: 'boardReset',
+            gameId,
+            board: game.board,
+            currentPlayer: game.currentPlayer,
+            nextBoard: game.nextBoard
+        });
+        peer.publish(gameId, message);
+        peer.send(message);
+    } else {
+        // Handle error or create? For now just log
+        console.log(`Game ${gameId} not found`);
+    }
+}
+
 export default defineWebSocketHandler({
     open(peer) {
         console.log('WebSocket connection opened');
@@ -163,128 +264,17 @@ export default defineWebSocketHandler({
         const data = JSON.parse(message.text());
 
         if (data.type === 'join') {
-            console.log('Joining game ' + data.gameId);
-            const gameId = data.gameId;
-            const playerName = data.playerName;
-            // const playerId = data.playerId || 'unknown'; // Should probably be passed from client
-            // for now, set the joining player as player 2. in the future, check for player 2 existing, then this player becomes spectator
-            // maybe this can be player role
-            const playerId = 2;
-
-            const game = gameManager.get(gameId);
-            console.log(game)
-            if (game) {
-                game.players[playerId] = {
-                    name: playerName,
-                    peer: peer
-                };
-                peer.subscribe(gameId);
-                const message = JSON.stringify({ 
-                    type: 'playerJoined', 
-                    gameId, 
-                    playerName,
-                    board: game.board,
-                    currentPlayer: game.currentPlayer,
-                    nextBoard: game.nextBoard });
-                peer.publish(gameId, message);
-                peer.send(message);
-            } else {
-                // Handle error or create? For now just log
-                console.log(`Game ${gameId} not found`);
-            }
-
+            handleJoin(peer, data);
         }
         if (data.type === 'create') {
-            if (gameManager.has(data.gameId)) {
-                const message = JSON.stringify({ type: 'error', message: 'Game already exists' });
-                console.log(`Game ${data.gameId} already exists`);
-                peer.publish(data.gameId, message);
-                peer.send(message);
-                return;
-            }
-            console.log('Creating game ' + data.gameId);
-            const gameId = data.gameId;
-            const playerName = data.playerName;
-            // game creator is player 1
-            const playerId = 1;
-
-            const newGame: ServerGameState = {
-                gameId,
-                players: {
-                    [playerId]: {
-                        name: playerName,
-                        peer: peer
-                    }
-                },
-                board: initializeBoard(),
-                currentPlayer: playerId,
-                nextBoard: -1,
-            };
-
-            gameManager.set(gameId, newGame);
-            peer.subscribe(gameId);
-            const message = JSON.stringify({ 
-                type: 'gameStarted', 
-                gameId, 
-                playerName,
-                board: newGame.board,
-                currentPlayer: newGame.currentPlayer,
-                nextBoard: newGame.nextBoard });
-            peer.publish(gameId, message);
-            peer.send(message);
+            handleCreate(peer, data);
         }
         if (data.type === 'move') {
-            const move = data.move
-            const gameId = move.gameId;
-            const playerId = move.playerId;
-            const game = gameManager.get(gameId);
-            if (game && game.board) {
-                if (playerId !== game.currentPlayer) {
-                    console.log('Invalid player: Player ID does not match current player.');
-                    return;
-                }
-                validateMove(game.board.boards[move.boardId], move.index, move.boardId, game.nextBoard);
-                const updatedBoard = updateBoard(move, game.board);
-                game.board = updatedBoard;
-                console.log("player id is: " + playerId);
-                game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
-                game.nextBoard = getNextBoard(move.index, updatedBoard);
-                const message = JSON.stringify({
-                    type: 'moveConfirmed',
-                    gameId,
-                    playerId,
-                    move,
-                    board: updatedBoard,
-                    nextBoard: game.nextBoard,
-                    currentPlayer: game.currentPlayer
-                });
-                peer.publish(gameId, message);
-                peer.send(message);
-            } else {
-                // Handle error or create? For now just log
-                console.log(`Game ${gameId} not found`);
-            }
+            handleMove(peer, data);
         }
         if (data.type === 'reset') {
-            const gameId = data.gameId;
-            const game = gameManager.get(gameId);
-            if (game) {
-                game.board = initializeBoard();
-                game.currentPlayer = 1;
-                game.nextBoard = -1;
-                const message = JSON.stringify({
-                    type: 'boardReset',
-                    gameId,
-                    board: game.board,
-                    currentPlayer: game.currentPlayer,
-                    nextBoard: game.nextBoard
-                });
-                peer.publish(gameId, message);
-                peer.send(message);
-            } else {
-                // Handle error or create? For now just log
-                console.log(`Game ${gameId} not found`);
-            }
+            handleReset(peer, data);
         }
     },
 })
+
