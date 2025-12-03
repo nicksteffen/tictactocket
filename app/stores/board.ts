@@ -60,15 +60,7 @@ export const useBoardStore = defineStore('board', {
         reset() {
             requestReset(this.gameId);
         },
-        // initializeBoard() {
-        //     this.boardState = {
-        //         // Use '_' for the value argument and 'index' for the array index argument
-        //         boards: Array.from({ length: 9 }, (_, index: number) => initializeSmallBoard(index)),
-        //         winner: 0,
-        //         maxRows: 3,
-        //         maxCols: 3,
-        //     };
-        // },
+       
         makeMove(gameId: string, boardId: number, index: number, target: number) {
             if (this.currentPlayer !== this.playerId) {
                 console.log("Not your turn");
