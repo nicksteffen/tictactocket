@@ -5,3 +5,7 @@
         <NuxtLink to="/chat">Chat</NuxtLink>
     </div>
 </template>
+
+<script setup>
+
+</script>

@@ -1,3 +1,4 @@
+import type { UseWebSocketReturn } from '@vueuse/core';
 import { defineStore } from 'pinia';
 import type { UltimateBoardDto } from '~~/types/game';
 
@@ -9,27 +10,47 @@ export interface gameState {
 
 }
 
+
+
 export const useGameStore = defineStore('game', {
     state: () => ({
-        game: null as gameState | null,
-        socket: null as WebSocket | null,
+        // game: null as gameState | null,
+        gameId: '',
+        currentPlayer: 1,
+        nextBoard: -1,
+        playerName: '',
+        playerId: 1,
+        boardState: {} as UltimateBoardDto,
+        // boardState: useBoardStore().boardState,
+
     }),
     actions: {
-        connect() {
+
+        setGameId(gameId: string) {
+            this.gameId = gameId;
+        },
+        setPlayerName(playerName: string) {
+            this.playerName = playerName;
+        },
+        setPlayerId(playerId: number) {
+            this.playerId = playerId;
+        },
+
+        syncBoardState(boardState: UltimateBoardDto, nextBoard: number, currentPlayer: number) {
+            this.boardState = boardState;
+            // useBoardStore().setBoardState(boardState);
+            this.nextBoard = nextBoard;
+            this.currentPlayer = currentPlayer;
         },
         createGame(gameId: string, playerName: string) {
-            this.game = {
-                gameId: gameId,
-                playerName: playerName,
-                board: {} as UltimateBoardDto,
-            };
+            this.gameId = gameId;
+            this.playerName = playerName;
+            this.boardState = {} as UltimateBoardDto;
         },
         joinGame(gameId: string, playerName: string) {
-            this.game = {
-                gameId: gameId,
-                playerName: playerName,
-                board: {} as UltimateBoardDto,
-            };
+            this.gameId = gameId;
+            this.playerName = playerName;
+            this.boardState = {} as UltimateBoardDto;
         }
     }
 })

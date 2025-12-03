@@ -7,5 +7,19 @@ export default defineNuxtConfig({
    experimental: {
     websocket: true,
    } 
-  }
+  },
+  vite: {
+    server: {
+      // ⚠️ IMPORTANT: Only add hosts you trust!
+      hmr: {
+        // Hot Module Replacement (HMR) needs to recognize the external host
+        host: 'synchronic-raffishly-julieta.ngrok-free.dev', 
+        protocol: 'wss',
+      },
+      // This setting tells Vite to accept connections from the ngrok domain
+      allowedHosts: [
+        'synchronic-raffishly-julieta.ngrok-free.dev'
+      ],
+    },
+  },
 })

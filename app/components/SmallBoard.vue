@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { useBoardStore } from '@/stores/board';
 import { storeToRefs } from 'pinia';
 import SmallCell from './SmallCell.vue';
 import { computed } from 'vue';
-import type { SmallBoardDto } from '~~/types/game';
 import { useGameStore } from '@/stores/gamemanager';
+import type { SmallBoardDto } from '~~/types/game';
 
 const props = defineProps<{ board: SmallBoardDto }>();
-const boardStore = useBoardStore();
 const gameStore = useGameStore();
-const { nextBoard } = storeToRefs(boardStore);
-const { game } = storeToRefs(gameStore);
-const gameId = computed(() => game.value?.gameId || '');
+const gameId = computed(() => gameStore.gameId);
+const {requestMove } = useGameSocket();
 
 const valToToken = (val: Number) => {
     if (val === 1) return 'X';
@@ -22,15 +19,22 @@ const valToToken = (val: Number) => {
 // Determine if this board is currently playable
 const isPlayable = computed(() => {
     // Board is playable if nextBoard is -1 (any board) or matches this board's index
-    return props.board.isAvailable && (nextBoard.value === -1 || nextBoard.value === props.board.index);
+    return props.board.isAvailable && (gameStore.nextBoard === -1 || gameStore.nextBoard === props.board.index);
 });
+
+const handleCellClick = (boardId: number, index: number) => {
+    if (gameStore.currentPlayer !== gameStore.playerId) return;
+
+    const target = gameStore.playerId;
+    requestMove(gameId.value, boardId, index, target, gameStore.currentPlayer);
+}
 
 </script>
 
 <template>
     <Board :isAvailable="board.isAvailable" :winner="board.winner" :isPlayable="isPlayable">
         <SmallCell v-for="(cell, index) in board.board" :key="index" :token="valToToken(cell)" i
-        @cellClick="boardStore.makeMove(gameId, board.index, index, boardStore.currentPlayer)">
+        @cellClick="handleCellClick(board.index, index)">
         </SmallCell>
     </Board>
 </template>
