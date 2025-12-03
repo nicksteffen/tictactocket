@@ -38,20 +38,49 @@ function handleJoin(peer: any, data: any) {
     console.log('Joining game ' + data.gameId);
     const gameId = data.gameId;
     const playerName = data.playerName;
-    // for now, set the joining player as player 2. in the future, check for player 2 existing, then this player becomes spectator
-    // maybe this can be player role
-    const playerId = 2;
-    // todo, search for player id in the game.get
-    // if found, return the player role or something, else 2 or 3 or whatever?
 
     const game = gameManager.get(gameId);
     console.log(game)
     if (game) {
+        let playerId = 0;
+        // Check for reconnection
+        for (const token in game.players) {
+            if (game.players[token].name === playerName) {
+                playerId = parseInt(token);
+                console.log(`Player ${playerName} reconnecting as player ${playerId}`);
+                break;
+            }
+        }
+
+        // If not reconnecting, assign new token
+        if (playerId === 0) {
+            if (!game.players[1]) {
+                playerId = 1;
+            } else if (!game.players[2]) {
+                playerId = 2;
+            } else {
+                // Game full
+                const message = JSON.stringify({ type: 'error', message: 'Game is full' });
+                peer.send(message);
+                return;
+            }
+        }
+
         game.players[playerId] = {
             name: playerName,
             peer: peer
         };
         peer.subscribe(gameId);
+
+        // Send identity to the joining player
+        const identityMessage = JSON.stringify({
+            type: 'identity',
+            playerId,
+            gameId,
+            playerName
+        });
+        peer.send(identityMessage);
+
         const message = JSON.stringify({
             type: 'playerJoined',
             gameId,
@@ -65,6 +94,8 @@ function handleJoin(peer: any, data: any) {
     } else {
         // Handle error or create? For now just log
         console.log(`Game ${gameId} not found`);
+        const message = JSON.stringify({ type: 'error', message: 'Game not found' });
+        peer.send(message);
     }
 }
 
@@ -98,6 +129,16 @@ function handleCreate(peer: any, data: any) {
 
     gameManager.set(gameId, newGame);
     peer.subscribe(gameId);
+
+    // Send identity to the creator
+    const identityMessage = JSON.stringify({
+        type: 'identity',
+        playerId,
+        gameId,
+        playerName
+    });
+    peer.send(identityMessage);
+
     const message = JSON.stringify({
         type: 'gameStarted',
         gameId,

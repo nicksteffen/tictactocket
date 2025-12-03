@@ -35,6 +35,9 @@ export const useGameStore = defineStore('game', {
         setPlayerId(playerId: number) {
             this.playerId = playerId;
         },
+        setPlayerToken(token: number) {
+            this.playerId = token;
+        },
 
         syncBoardState(boardState: UltimateBoardDto, nextBoard: number, currentPlayer: number) {
             this.boardState = boardState;
