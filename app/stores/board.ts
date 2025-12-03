@@ -3,50 +3,6 @@ import { defineStore } from 'pinia';
 
 import type { boardState, smallBoardState } from '../../types/index';
 
-// All possible winning combinations for a 3x3 board
-const WINNING_STATES = [
-    [0, 1, 2], // Top row
-    [3, 4, 5], // Middle row
-    [6, 7, 8], // Bottom row
-    [0, 3, 6], // Left column
-    [1, 4, 7], // Middle column
-    [2, 5, 8], // Right column
-    [0, 4, 8], // Diagonal top-left to bottom-right
-    [2, 4, 6], // Diagonal top-right to bottom-left
-];
-
-/**
- * Checks if a specific win condition is met on the board
- * @param board - The board array to check
- * @param winCondition - Array of indices representing a winning pattern
- * @param target - The player value to check for (1 or 2)
- * @returns true if all positions in the win condition match the target
- */
-function checkWinCondition(board: Number[], winCondition: number[], target: number): boolean {
-    return winCondition.every((index) => board[index] === target);
-}
-
-/**
- * Checks if a player has won on the given board
- * @param board - The board array to check
- * @param target - The player value to check for (1 or 2)
- * @returns true if the target player has won
- */
-function checkIfWon(board: Number[], target: number): boolean {
-    return WINNING_STATES.some(condition => checkWinCondition(board, condition, target));
-}
-
-function initializeSmallBoard(index: number) {
-    return {
-        board: Array.from({ length: 9 }, () => 0),
-        isAvailable: true,
-        winner: 0,
-        maxRows: 3,
-        maxCols: 3,
-        index: index,
-    };
-
-}
 
 const { data, send } = useWebSocket('ws://localhost:3000/api/gameSocket');
 function requestMove(gameId: string, boardId: number, index: number, target: number, playerId: number) {
@@ -64,6 +20,15 @@ function requestMove(gameId: string, boardId: number, index: number, target: num
     send(JSON.stringify(payload));
 
 }
+function requestReset(gameId: string) {
+    // the server should maybe check for host/ownership or something
+    const payload = {
+        type: 'reset',
+        gameId: gameId,
+    };
+    send(JSON.stringify(payload));
+
+}
 
 
 export const useBoardStore = defineStore('board', {
@@ -71,8 +36,16 @@ export const useBoardStore = defineStore('board', {
         boardState: {} as boardState,
         currentPlayer: 1,
         nextBoard: -1,
+        gameId: '',
+        playerName:'',
     }),
     actions: {
+        setGameId(gameId: string) {
+            this.gameId = gameId;
+        },
+        setPlayerName(playerName: string) {
+            this.playerName = playerName;
+        },
         syncBoardState(boardState: boardState, nextBoard: number, currentPlayer: number) {
             // todo, I think this should be called sync Game State
             console.log("sync in actions")
@@ -81,20 +54,17 @@ export const useBoardStore = defineStore('board', {
             this.currentPlayer = currentPlayer;
         },
         reset() {
-            this.boardState = {} as boardState;
-            this.currentPlayer = 1;
-            this.nextBoard = -1;
-            this.initializeBoard();
+            requestReset(this.gameId);
         },
-        initializeBoard() {
-            this.boardState = {
-                // Use '_' for the value argument and 'index' for the array index argument
-                boards: Array.from({ length: 9 }, (_, index: number) => initializeSmallBoard(index)),
-                winner: 0,
-                maxRows: 3,
-                maxCols: 3,
-            };
-        },
+        // initializeBoard() {
+        //     this.boardState = {
+        //         // Use '_' for the value argument and 'index' for the array index argument
+        //         boards: Array.from({ length: 9 }, (_, index: number) => initializeSmallBoard(index)),
+        //         winner: 0,
+        //         maxRows: 3,
+        //         maxCols: 3,
+        //     };
+        // },
         makeMove(gameId: string, boardId: number, index: number, target: number) {
             // const smallBoard = this.boardState.boards[boardId];
             // if (!smallBoard) {

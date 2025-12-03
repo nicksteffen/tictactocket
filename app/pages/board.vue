@@ -36,10 +36,30 @@ const url = 'ws://localhost:3000/api/gameSocket';
 // const url = `ws://${location.host}/api/gameSocket`;
 const {status, data, send, open, close} = useWebSocket(url);
 
+// I feel like this handler should be in the store, but I'm not sure how to do that
+// or maybe in a composable or something
 watch(data, (newData) => {
     const message = JSON.parse(newData);
     if (message.type === 'moveConfirmed') {
         boardStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+    }
+    if (message.type ==='boardReset') {
+        console.log("board reset")
+        boardStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+    }
+    if (message.type === 'playerJoined') {
+        boardStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+        console.log(message.playerName + ' joined the game');
+    }
+    if (message.type === 'playerLeft') {
+        console.log(message.playerName + ' left the game');
+    }
+    if (message.type === 'gameStarted') {
+        boardStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+        console.log('Game started');
+    }
+    if (message.type === 'gameOver') {
+        console.log('Game over');
     }
 
 })
@@ -57,17 +77,21 @@ const playerName = ref('');
 
 const boardStore = useBoardStore();
 const { boardState } = storeToRefs(boardStore);
-boardStore.initializeBoard();
+// boardStore.initializeBoard();
 
 function joinGame() {
     gameStore.joinGame(gameId.value, playerName.value);
     send(JSON.stringify({ type: 'join', gameId: gameId.value, playerName: playerName.value }));
+    boardStore.setGameId(gameId.value);
+    boardStore.setPlayerName(playerName.value);
 }
 
 function createGame() {
     gameStore.createGame(gameId.value, playerName.value);
     const resp = send(JSON.stringify({ type: 'create', gameId: gameId.value, playerName: playerName.value }));
     console.log(resp);
+    boardStore.setGameId(gameId.value);
+    boardStore.setPlayerName(playerName.value);
 }
 </script>
 

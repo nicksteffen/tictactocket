@@ -178,7 +178,13 @@ export default defineWebSocketHandler({
                     peer: peer
                 };
                 peer.subscribe(gameId);
-                const message = JSON.stringify({ type: 'join', gameId, playerName });
+                const message = JSON.stringify({ 
+                    type: 'playerJoined', 
+                    gameId, 
+                    playerName,
+                    board: game.board,
+                    currentPlayer: game.currentPlayer,
+                    nextBoard: game.nextBoard });
                 peer.publish(gameId, message);
                 peer.send(message);
             } else {
@@ -216,7 +222,13 @@ export default defineWebSocketHandler({
 
             gameManager.set(gameId, newGame);
             peer.subscribe(gameId);
-            const message = JSON.stringify({ type: 'create', gameId, playerName });
+            const message = JSON.stringify({ 
+                type: 'gameStarted', 
+                gameId, 
+                playerName,
+                board: newGame.board,
+                currentPlayer: newGame.currentPlayer,
+                nextBoard: newGame.nextBoard });
             peer.publish(gameId, message);
             peer.send(message);
         }
@@ -240,6 +252,27 @@ export default defineWebSocketHandler({
                     board: updatedBoard,
                     nextBoard: game.nextBoard,
                     currentPlayer: game.currentPlayer
+                });
+                peer.publish(gameId, message);
+                peer.send(message);
+            } else {
+                // Handle error or create? For now just log
+                console.log(`Game ${gameId} not found`);
+            }
+        }
+        if (data.type === 'reset') {
+            const gameId = data.gameId;
+            const game = gameManager.get(gameId);
+            if (game) {
+                game.board = initializeBoard();
+                game.currentPlayer = 1;
+                game.nextBoard = -1;
+                const message = JSON.stringify({
+                    type: 'boardReset',
+                    gameId,
+                    board: game.board,
+                    currentPlayer: game.currentPlayer,
+                    nextBoard: game.nextBoard
                 });
                 peer.publish(gameId, message);
                 peer.send(message);
