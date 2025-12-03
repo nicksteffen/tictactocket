@@ -84,6 +84,7 @@ function joinGame() {
     send(JSON.stringify({ type: 'join', gameId: gameId.value, playerName: playerName.value }));
     boardStore.setGameId(gameId.value);
     boardStore.setPlayerName(playerName.value);
+    boardStore.setPlayerId(2);
 }
 
 function createGame() {
@@ -92,6 +93,7 @@ function createGame() {
     console.log(resp);
     boardStore.setGameId(gameId.value);
     boardStore.setPlayerName(playerName.value);
+    boardStore.setPlayerId(1);
 }
 </script>
 

@@ -129,6 +129,7 @@ function getNextBoard(moveIndex: number, board: boardState) {
 
 function validateMove(smallBoard: smallBoardState, index: number,boardId: number, nextBoard: number) {
     // todo, return the error messages and a false, so we can send the error back to our peer
+
     if (!smallBoard) {
         throw new Error('Invalid board: Board ID not found.');
     }
@@ -238,6 +239,10 @@ export default defineWebSocketHandler({
             const playerId = move.playerId;
             const game = gameManager.get(gameId);
             if (game && game.board) {
+                if (playerId !== game.currentPlayer) {
+                    console.log('Invalid player: Player ID does not match current player.');
+                    return;
+                }
                 validateMove(game.board.boards[move.boardId], move.index, move.boardId, game.nextBoard);
                 const updatedBoard = updateBoard(move, game.board);
                 game.board = updatedBoard;
