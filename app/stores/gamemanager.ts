@@ -1,14 +1,17 @@
 import type { UseWebSocketReturn } from '@vueuse/core';
 import { defineStore } from 'pinia';
-import type { UltimateBoardDto } from '~~/types/game';
+import type { Alert, UltimateBoardDto } from '~~/types/game';
 
 
 export interface gameState {
+    id: string;
     gameId: string;
     playerName: string;
     board: UltimateBoardDto;
 
 }
+
+
 
 
 
@@ -21,10 +24,21 @@ export const useGameStore = defineStore('game', {
         playerName: '',
         playerId: 1,
         boardState: {} as UltimateBoardDto,
-        // boardState: useBoardStore().boardState,
+        alerts: [] as Alert[] 
 
     }),
     actions: {
+        addAlert(alert: Alert) {
+            alert.id = this.alerts.length;
+            alert.timestamp = new Date().toISOString();
+            this.alerts.push(alert);
+        },
+        removeFirstAlert() {
+            this.alerts.shift();
+        },
+        removeAlert(alertId: number) {
+            this.alerts = this.alerts.filter((a) => a.id !== alertId);
+        },
 
         setGameId(gameId: string) {
             this.gameId = gameId;
@@ -38,10 +52,10 @@ export const useGameStore = defineStore('game', {
         setPlayerToken(token: number) {
             this.playerId = token;
         },
-        createGame(gameId: string, playerName: string) {
+        createGame(gameId: string, playerName: string, boardState: UltimateBoardDto) {
             this.gameId = gameId;
             this.playerName = playerName;
-            this.boardState = {} as UltimateBoardDto;
+            this.boardState = boardState;
         },
 
         syncBoardState( boardState: UltimateBoardDto, nextBoard: number, currentPlayer: number) {
@@ -49,10 +63,10 @@ export const useGameStore = defineStore('game', {
             this.nextBoard = nextBoard;
             this.currentPlayer = currentPlayer;
         },
-        joinGame(gameId: string, playerName: string) {
+        joinGame(gameId: string, playerName: string, boardState: UltimateBoardDto) {
             this.gameId = gameId;
             this.playerName = playerName;
-            this.boardState = {} as UltimateBoardDto;
+            this.boardState = boardState;
         }
     }
 })

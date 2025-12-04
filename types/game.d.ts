@@ -23,3 +23,10 @@ export interface Player {
     name: string;
     token: number;
 }
+interface Alert {
+    id?: number;
+    type: string;
+    message: string;
+    details?: string;
+    timestamp?: string;
+}

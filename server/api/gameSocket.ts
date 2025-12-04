@@ -14,6 +14,11 @@ function sendIdentityMessage(peer: any, playerId: number, gameId: string, player
 
 }
 
+function sendErrorMessage(peer: any, message: string) {
+    const errorMessage = JSON.stringify({ type: 'error', message: message, timestamp: new Date().toISOString() });
+    peer.send(errorMessage);
+}
+
 function validateMove(game: GameState, index: number, boardId: number, playerId: number) {
     if (playerId !== game.currentPlayer) {
         throw new Error(`Invalid move: Player ${playerId} is not the current player.`);
@@ -39,17 +44,24 @@ function handleJoin(peer: any, data: any) {
     const game = gameStateManager.get(gameId);
     console.log(game)
     if (game) {
-        const player = game.findOrCreatePlayerByName(playerName);
-        if (!player) {
-            console.log(`Player ${playerName} not found`);
+        let player : Player;
+        try {
+            player = game.findOrCreatePlayerByName(playerName);
+        } catch (error) {
+            console.log(error);
+            const message = JSON.stringify({ type: 'error', message: error.message });
+            peer.publish(gameId, message);
+            peer.send(message);
             return;
         }
+        console.log(player)
 
         peer.subscribe(gameId);
 
         // Send identity to the joining player
 
         sendIdentityMessage(peer, player.id, gameId, playerName);
+        console.log("sent Identity")
 
         const message = JSON.stringify({
             type: 'playerJoined',
@@ -59,22 +71,19 @@ function handleJoin(peer: any, data: any) {
             currentPlayer: game.currentPlayer,
             nextBoard: game.nextBoard
         });
+        console.log("sent player joined")
         peer.publish(gameId, message);
         peer.send(message);
     } else {
         // Handle error or create? For now just log
         console.log(`Game ${gameId} not found`);
-        const message = JSON.stringify({ type: 'error', message: 'Game not found' });
-        peer.send(message);
+        sendErrorMessage(peer, `Game ${gameId} not found`);
     }
 }
 
 function handleCreate(peer: any, data: any) {
     if (gameStateManager.has(data.gameId)) {
-        const message = JSON.stringify({ type: 'error', message: 'Game already exists' });
-        console.log(`Game ${data.gameId} already exists`);
-        peer.publish(data.gameId, message);
-        peer.send(message);
+        sendErrorMessage(peer, `Game ${data.gameId} already exists`);
         return;
     }
     console.log('Creating game ' + data.gameId);
@@ -112,6 +121,9 @@ function handleMove(peer: any, data: any) {
             validateMove(game, move.index, move.boardId, move.playerId);
         } catch (e) {
             console.log(e);
+            // send error message
+            // sendErrorMessage(peer, e.message);  
+
             return;
         }
 
@@ -146,8 +158,7 @@ function handleMove(peer: any, data: any) {
             peer.send(gameOverMessage);
         }
     } else {
-        // Handle error or create? For now just log
-        console.log(`Game ${gameId} not found`);
+        sendErrorMessage(peer, `Game ${gameId} not found`);
     }
 }
 
@@ -166,8 +177,7 @@ function handleReset(peer: any, data: any) {
         peer.publish(gameId, message);
         peer.send(message);
     } else {
-        // Handle error or create? For now just log
-        console.log(`Game ${gameId} not found`);
+        sendErrorMessage(peer, `Game ${gameId} not found`);
     }
 }
 

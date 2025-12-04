@@ -1,6 +1,8 @@
 
 import { useWebSocket } from "@vueuse/core";
 import { toast } from "vue-sonner";
+import {AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction} from "../components/ui/alert-dialog";
+import type { Alert } from "~~/types/game";
 
 type GameId = string;
 type PlayerName = string;
@@ -42,8 +44,14 @@ export function useGameSocket() {
     watch(data, (newData) => {
         const message = JSON.parse(newData);
         if (message.type === 'error') {
+            console.log("error received");
             console.log(message.message);
-            toast.error(message.message);
+            const alert: Alert = {
+                type: 'error',
+                message: message.message,
+                details: message.details
+            };
+            gameStore.addAlert(alert);
         }
         if (message.type === 'moveConfirmed') {
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
@@ -52,22 +60,36 @@ export function useGameSocket() {
             console.log("board reset")
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
             toast.info('Board reset');
+            gameStore.addAlert({
+                type: 'info',
+                message: 'Board reset',
+                details: 'The board has been reset'
+            });
         }
         if (message.type === 'playerJoined') {
-            gameStore.joinGame(message.gameId, message.playerName);
+            gameStore.joinGame(message.gameId, message.playerName, message.board);
             console.log(message.playerName + ' joined the game');
-            toast.success(`${message.playerName} joined the game`);
+            gameStore.addAlert({
+                type: 'success',
+                message: `${message.playerName} joined the game`,
+                details: `${message.playerName} joined the game`
+            });
         }
         if (message.type === 'playerLeft') {
             console.log(message.playerName + ' left the game');
-            toast.info(`${message.playerName} left the game`);
+            gameStore.addAlert({
+                type: 'info',
+                message: `${message.playerName} left the game`,
+            });
         }
         if (message.type === 'gameStarted') {
             console.log('Game started');
             console.log(message.board)
-            // gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
-            gameStore.createGame(message.gameId, message.playerName);
-            toast.success('Game started!');
+            gameStore.createGame(message.gameId, message.playerName, message.board);
+            gameStore.addAlert({
+                type: 'success',
+                message: 'Game started!',
+            });
         }
         if (message.type === 'identity') {
             console.log('Identity received: ' + message.playerId);
@@ -76,7 +98,10 @@ export function useGameSocket() {
         if (message.type === 'gameOver') {
             console.log('Game over');
             const winnerName = message.winner === 1 ? 'Player 1 (X)' : 'Player 2 (O)';
-            toast.success(`Game Over! ${winnerName} Wins!`);
+            gameStore.addAlert({
+                type: 'success',
+                message: `Game Over! ${winnerName} Wins!`,
+            });
         }
 
     });

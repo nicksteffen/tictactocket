@@ -41,13 +41,13 @@ export class GameState {
     setNextBoard(index: number) {
         this.nextBoard = this.board.getNextBoard(index);
     }
-    findPlayer(token: number) {
-        return this.players.get(token);
+    findPlayer(token: number): Player {
+        return this.players.get(token) as Player;
     }
     addPlayer(player: Player) {
         this.players.set(player.token, player);
     }
-    findOrCreatePlayerByName(name: string) {
+    findOrCreatePlayerByName(name: string): Player {
         let playerId = 0;
         // Check for reconnection
         for (const token of this.players.keys()) {
@@ -57,6 +57,10 @@ export class GameState {
                 console.log(`Player ${name} reconnecting as player ${playerId}`);
                 break;
             }
+        }
+        if (playerId !== 0) {
+            console.log("returning player")
+            return this.findPlayer(playerId) as Player;
         }
 
         // If not reconnecting, assign new token
@@ -68,7 +72,7 @@ export class GameState {
             } else {
                 // Game full
                 console.log('Game is full');
-                return;
+                throw new Error('Game is full');
             }
         }
 
