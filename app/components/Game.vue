@@ -7,6 +7,11 @@
         <div v-if="gameStore.isAI" class="p-3 bg-indigo-100 border border-indigo-300 text-indigo-800 rounded-lg text-center font-medium" >
             🤖 **AI Mode:** Playing against the computer.
         </div>
+        <div v-if="currentPlayerTurn === playerPiece" class="p-3 bg-indigo-100 border border-indigo-300 text-indigo-800 rounded-lg text-center font-medium" >
+            It's your turn!
+        </div>
+        <div v-else class="p-3 bg-indigo-100 border border-indigo-300 text-indigo-800 rounded-lg text-center font-medium" >
+            It's the other player's turn.
         </div>
 
         <div class="w-full max-w-[min(90vh,90vw)] aspect-square relative">
@@ -68,6 +73,15 @@ const gameStore = useGameStore();
 const {gameId} = storeToRefs(gameStore);
 const {boardState} = storeToRefs(gameStore);
 const {isAI} = storeToRefs(gameStore);
+
+const playerPiece = computed(() => {
+    if (!gameStore.playerId) return null;
+    return gameStore.playerId === 1 ? 'X' : 'O';
+});
+const currentPlayerTurn = computed(() => {
+    if (!gameStore.currentPlayer) return null;
+    return gameStore.currentPlayer === 1 ? 'X' : 'O';
+});
 
 function reset() {
     if (!gameId.value) return;
