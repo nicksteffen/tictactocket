@@ -36,7 +36,8 @@ type GameSocketInstance = ReturnType<typeof useWebSocket> & GameSocketAPI;
 let instance: GameSocketInstance | null = null;
 
 export function useGameSocket() {
-    const url = 'ws://localhost:3000/api/gameSocket';
+    // const url = 'ws://localhost:3000/api/gameSocket';
+    const url = "/api/gameSocket";
     console.log("useGameSocket");
     if (instance) {
         console.log("instance already exists");
