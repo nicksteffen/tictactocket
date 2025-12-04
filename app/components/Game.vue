@@ -1,11 +1,13 @@
 <template>
     <div class="min-h-screen flex flex-col items-center justify-center p-4 gap-6 bg-gray-50">
+
         <div class="w-full max-w-[min(90vh,90vw)] aspect-square relative">
             <TicTacToeBoard>
                 <SmallBoard 
                     v-for="(board, index) in boardState.boards" 
                     :key="index" 
                     :board="board"
+                    :isAI="isAI"
                 />
             </TicTacToeBoard>
 
@@ -29,6 +31,8 @@
                 </Button>
             </div>
         </div>
+        <div>
+
         <Button 
             v-if="!boardState.winner"
             size="lg" 
@@ -36,7 +40,12 @@
             @click="reset()"
         >
             New Game
+
         </Button>
+        <Switch id="isAI" v-model="isAI" />
+        <Label for="isAI">Play against AI</Label>
+        <p v-if="isAI"> AI MODE ACTIVE</p>
+        </div>
     </div>
 </template>
 
@@ -47,12 +56,14 @@ import TicTacToeBoard from '../components/TicTacToeBoard.vue';
 import { useGameStore } from '../stores/gamemanager';
 import { useGameSocket } from '../composables/useGameSocket';
 import { Button } from '../components/ui/button';
+import {Switch } from '../components/ui/switch';
 
 const socket = useGameSocket();
 const {requestReset} = socket;
 const gameStore = useGameStore();
 const {gameId} = storeToRefs(gameStore);
 const {boardState} = storeToRefs(gameStore);
+const isAI = ref(false);
 
 function reset() {
     if (!gameId.value) return;

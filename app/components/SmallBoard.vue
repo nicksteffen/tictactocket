@@ -42,10 +42,10 @@ import { useGameStore } from '../stores/gamemanager';
 import { useGameSocket } from '../composables/useGameSocket';
 import type { SmallBoardDto } from '~~/types/game';
 
-const props = defineProps<{ board: SmallBoardDto }>();
+const props = defineProps<{ board: SmallBoardDto, isAI?: boolean }>();
 const gameStore = useGameStore();
 const gameId = computed(() => gameStore.gameId);
-const {requestMove } = useGameSocket();
+const {requestAIMove, requestMove } = useGameSocket();
 
 const valToToken = (val: Number) => {
     if (val === 1) return 'X';
@@ -63,7 +63,11 @@ const handleCellClick = (boardId: number, index: number) => {
     if (gameStore.currentPlayer !== gameStore.playerId) return;
 
     const target = gameStore.playerId;
-    requestMove(gameId.value, boardId, index, target, gameStore.currentPlayer);
+    if (props.isAI) {
+        requestAIMove(gameId.value, boardId, index, target, gameStore.playerId);
+    } else {
+        requestMove(gameId.value, boardId, index, target, gameStore.currentPlayer);
+    }
 }
 
 </script>

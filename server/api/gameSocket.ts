@@ -1,3 +1,4 @@
+import { getHeuristicMove, Move } from '../domain/AIPlayer';
 import { GameState, Player } from '../domain/GameState';
 import { UltimateBoard } from '../domain/UltimateBoard';
 
@@ -112,6 +113,8 @@ function handleCreate(peer: any, data: any) {
 }
 
 function handleMove(peer: any, data: any) {
+    console.log("temp handle move")
+    console.log(data)
     const move = data.move
     const gameId = move.gameId;
     const playerId = move.playerId;
@@ -126,8 +129,10 @@ function handleMove(peer: any, data: any) {
 
             return;
         }
+        console.log("move validate passed");
 
         game.board.update(move.boardId, move.index, move.target);
+        console.log("small board update");
         console.log(game.board)
 
         const hasWon = game.board.checkWin(move.target);
@@ -135,6 +140,7 @@ function handleMove(peer: any, data: any) {
         game.nextPlayer();
         game.setNextBoard(move.index);
 
+        console.log("sending move confirmed")
         const message = JSON.stringify({
             type: 'moveConfirmed',
             gameId,
@@ -158,6 +164,7 @@ function handleMove(peer: any, data: any) {
             peer.send(gameOverMessage);
         }
     } else {
+        console.log(`Game ${gameId} not found`);
         sendErrorMessage(peer, `Game ${gameId} not found`);
     }
 }
@@ -179,6 +186,47 @@ function handleReset(peer: any, data: any) {
     } else {
         sendErrorMessage(peer, `Game ${gameId} not found`);
     }
+}
+
+function handleAIMove(peer: any, data: any) {
+    console.log("ai move");
+    const move = data.move;
+    const gameId = move.gameId;
+    const playerId = move.playerId;
+    const game = gameStateManager.get(gameId);
+    if (!game) {
+        sendErrorMessage(peer, `Game ${gameId} not found`);
+        return;
+    }
+    // get the opponent as the opposite of the current player
+    // make the player's move
+    const opponent = playerId === 1 ? 2 : 1;
+    console.log("handle players move")
+    handleMove(peer, data);
+    // get the ai opponent's move
+    const aimove : Move = getHeuristicMove(game.board, game.nextBoard, opponent);
+
+    // if the ai made a move, handle that move as well
+    if (aimove) {
+        console.log("making ai move");
+        console.log(aimove);
+        console.log("game id")
+        console.log(gameId)
+        const move = {
+            gameId: gameId,
+            boardId: aimove.boardId,
+            index: aimove.cellIndex,
+            target: opponent,
+            playerId: opponent,
+        };
+        const payload = {
+            type: 'internalAiMove',
+            move: move
+        }
+        console.log("handle ai move")
+        handleMove(peer, payload);
+    }
+
 }
 
 export default defineWebSocketHandler({
@@ -203,6 +251,10 @@ export default defineWebSocketHandler({
         }
         if (data.type === 'reset') {
             handleReset(peer, data);
+        }
+        if (data.type === 'aiMove') {
+            console.log("ai move handler if block");
+            handleAIMove(peer, data);
         }
     },
 })

@@ -1,7 +1,6 @@
 
 import { useWebSocket } from "@vueuse/core";
 import { toast } from "vue-sonner";
-import {AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction} from "../components/ui/alert-dialog";
 import type { Alert } from "~~/types/game";
 
 type GameId = string;
@@ -23,6 +22,13 @@ interface GameSocketAPI {
     ) => void;
     requestJoinGame: (gameId: GameId, playerName: PlayerName) => void;
     requestCreateGame: (gameId: GameId, playerName: PlayerName) => void;
+    requestAIMove: (
+        gameId: GameId,
+        boardId: BoardId,
+        index: Index,
+        target: Target,
+        playerId: PlayerId
+    ) => void; 
 }
 type GameSocketInstance = ReturnType<typeof useWebSocket> & GameSocketAPI;
 
@@ -123,6 +129,23 @@ export function useGameSocket() {
         send(JSON.stringify(payload));
     }
 
+    function requestAIMove(gameId: string, boardId: number, index: number, target: number, playerId: number) {
+        // we send the players move, and then let the ai respond
+        console.log("requesting ai move");
+        const move = {
+            gameId: gameId,
+            boardId: boardId,
+            index: index,
+            target: target,
+            playerId: playerId,
+        };
+        const payload = {
+            type: 'aiMove',
+            move: move,
+        };
+        send(JSON.stringify(payload));
+    }
+
     function requestJoinGame(gameId: string, playerName: string) {
         send(JSON.stringify({ type: 'join', gameId: gameId, playerName: playerName }));
     }
@@ -145,7 +168,8 @@ export function useGameSocket() {
         requestReset,
         requestMove,
         requestJoinGame,
-        requestCreateGame
+        requestCreateGame,
+        requestAIMove
     }
 
 
