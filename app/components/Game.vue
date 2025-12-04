@@ -1,5 +1,13 @@
 <template>
     <div class="min-h-screen flex flex-col items-center justify-center p-4 gap-6 bg-gray-50">
+        <div >
+
+
+
+        <div v-if="gameStore.isAI" class="p-3 bg-indigo-100 border border-indigo-300 text-indigo-800 rounded-lg text-center font-medium" >
+            🤖 **AI Mode:** Playing against the computer.
+        </div>
+        </div>
 
         <div class="w-full max-w-[min(90vh,90vw)] aspect-square relative">
             <TicTacToeBoard>
@@ -31,7 +39,6 @@
                 </Button>
             </div>
         </div>
-        <div>
 
         <Button 
             v-if="!boardState.winner"
@@ -42,10 +49,7 @@
             New Game
 
         </Button>
-        <Switch id="isAI" v-model="isAI" />
-        <Label for="isAI">Play against AI</Label>
-        <p v-if="isAI"> AI MODE ACTIVE</p>
-        </div>
+
     </div>
 </template>
 
@@ -63,7 +67,7 @@ const {requestReset} = socket;
 const gameStore = useGameStore();
 const {gameId} = storeToRefs(gameStore);
 const {boardState} = storeToRefs(gameStore);
-const isAI = ref(false);
+const {isAI} = storeToRefs(gameStore);
 
 function reset() {
     if (!gameId.value) return;

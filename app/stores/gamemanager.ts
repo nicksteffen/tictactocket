@@ -22,7 +22,8 @@ export const useGameStore = defineStore('game', {
         playerName: '',
         playerId: 1,
         boardState: {} as UltimateBoardDto,
-        alerts: [] as Alert[] 
+        alerts: [] as Alert[],
+        isAI: false,
 
     }),
     actions: {

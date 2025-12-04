@@ -41,6 +41,13 @@
                     >
                         Create Game
                     </Button>
+                    <Button 
+                        @click="createAIGame" 
+                        :disabled="!isValid"
+                        class="w-full"
+                    >
+                        Create AI Game
+                    </Button>
                 </div>
             </div>
         </Card>
@@ -80,10 +87,13 @@ function joinGame() {
 
 function createGame() {
     if (!isValid.value) return;
-    // gameStore.createGame(gameId.value, playerName.value);
     requestCreateGame(gameId.value, playerName.value);
-    // gameStore.boardState = gameStore.boardState;
-    // gameStore.playerName = playerName.value;
+}
+
+function createAIGame() {
+    if (!isValid.value) return;
+    gameStore.isAI = true;
+    requestCreateGame(gameId.value, playerName.value);
 }
 </script>
 
