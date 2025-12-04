@@ -4,7 +4,21 @@ import { fileURLToPath } from 'url';
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@vueuse/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@vueuse/nuxt', 'shadcn-nuxt'],
+  shadcn: {
+    /**
+     * Prefix for all the imported component.
+     * @default "Ui"
+     */
+    prefix: '',
+    /**
+     * Directory that the component lives in.
+     * Will respect the Nuxt aliases.
+     * @link https://nuxt.com/docs/api/nuxt-config#alias
+     * @default "@/components/ui"
+     */
+    componentDir: '@/components/ui'
+  },
   nitro: {
     experimental: {
       websocket: true,
@@ -13,7 +27,7 @@ export default defineNuxtConfig({
   vite: {
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./', import.meta.url)),
+        '@': fileURLToPath(new URL('./app', import.meta.url)),
       },
     },
     server: {

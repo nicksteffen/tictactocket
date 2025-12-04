@@ -54,7 +54,7 @@ export function useGameSocket() {
             toast.info('Board reset');
         }
         if (message.type === 'playerJoined') {
-            gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+            gameStore.joinGame(message.gameId, message.playerName);
             console.log(message.playerName + ' joined the game');
             toast.success(`${message.playerName} joined the game`);
         }
@@ -65,7 +65,8 @@ export function useGameSocket() {
         if (message.type === 'gameStarted') {
             console.log('Game started');
             console.log(message.board)
-            gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+            // gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+            gameStore.createGame(message.gameId, message.playerName);
             toast.success('Game started!');
         }
         if (message.type === 'identity') {

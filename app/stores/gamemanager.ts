@@ -38,17 +38,16 @@ export const useGameStore = defineStore('game', {
         setPlayerToken(token: number) {
             this.playerId = token;
         },
-
-        syncBoardState(boardState: UltimateBoardDto, nextBoard: number, currentPlayer: number) {
-            this.boardState = boardState;
-            // useBoardStore().setBoardState(boardState);
-            this.nextBoard = nextBoard;
-            this.currentPlayer = currentPlayer;
-        },
         createGame(gameId: string, playerName: string) {
             this.gameId = gameId;
             this.playerName = playerName;
             this.boardState = {} as UltimateBoardDto;
+        },
+
+        syncBoardState( boardState: UltimateBoardDto, nextBoard: number, currentPlayer: number) {
+            this.boardState = boardState;
+            this.nextBoard = nextBoard;
+            this.currentPlayer = currentPlayer;
         },
         joinGame(gameId: string, playerName: string) {
             this.gameId = gameId;

@@ -44,7 +44,9 @@
                 </div>
             </div>
         </Card>
+    <button @click="test">test</button>
     </div>
+
 </template>
 
 <script setup lang="ts">
@@ -55,7 +57,13 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
 import { Label } from '../components/ui/label';
+import {toast} from 'vue-sonner'
 
+
+function test() {
+    console.log('test');
+    toast.success('test');
+}
 const playerName = ref('');
 const gameId = ref('');
 
@@ -69,18 +77,18 @@ const isValid = computed(() => {
 
 function joinGame() {
     if (!isValid.value) return;
-    gameStore.joinGame(gameId.value, playerName.value);
+    // gameStore.joinGame(gameId.value, playerName.value);
     requestJoinGame(gameId.value, playerName.value);
-    gameStore.boardState = gameStore.boardState;
-    gameStore.playerName = playerName.value;
+    // gameStore.boardState = gameStore.boardState;
+    // gameStore.playerName = playerName.value;
 }
 
 function createGame() {
     if (!isValid.value) return;
-    gameStore.createGame(gameId.value, playerName.value);
+    // gameStore.createGame(gameId.value, playerName.value);
     requestCreateGame(gameId.value, playerName.value);
-    gameStore.boardState = gameStore.boardState;
-    gameStore.playerName = playerName.value;
+    // gameStore.boardState = gameStore.boardState;
+    // gameStore.playerName = playerName.value;
 }
 </script>
 
