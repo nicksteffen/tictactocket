@@ -49,8 +49,8 @@ function handleJoin(peer: any, data: any) {
         try {
             player = game.findOrCreatePlayerByName(playerName);
         } catch (error) {
-            console.log(error);
-            const message = JSON.stringify({ type: 'error', message: error.message });
+            const msg = `Player ${playerName} already exists.`;
+            const message = JSON.stringify({ type: 'error', message: msg });
             peer.publish(gameId, message);
             peer.send(message);
             return;
