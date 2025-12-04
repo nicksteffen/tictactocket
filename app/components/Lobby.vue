@@ -41,6 +41,8 @@
                     >
                         Create Game
                     </Button>
+                </div>
+                <div class="pt-2">
                     <Button 
                         @click="createAIGame" 
                         :disabled="!isValid"
