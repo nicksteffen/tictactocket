@@ -46,7 +46,7 @@ import SmallBoard from '../components/SmallBoard.vue';
 import TicTacToeBoard from '../components/TicTacToeBoard.vue';
 import { useGameStore } from '../stores/gamemanager';
 import { useGameSocket } from '../composables/useGameSocket';
-import { Button } from '@/app/components/ui/button';
+import { Button } from '../components/ui/button';
 
 const socket = useGameSocket();
 const {requestReset} = socket;

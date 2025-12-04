@@ -42,6 +42,7 @@ export function useGameSocket() {
     watch(data, (newData) => {
         const message = JSON.parse(newData);
         if (message.type === 'error') {
+            console.log(message.message);
             toast.error(message.message);
         }
         if (message.type === 'moveConfirmed') {
@@ -77,8 +78,6 @@ export function useGameSocket() {
             toast.success(`Game Over! ${winnerName} Wins!`);
         }
 
-        // CREATE AND JOIN GAME SHOULD BE HANDELED AND SYNC BOARD STATE?
-        // handle data
     });
 
 

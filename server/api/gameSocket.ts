@@ -1,23 +1,20 @@
+import { GameState, Player } from '../domain/GameState';
 import { UltimateBoard } from '../domain/UltimateBoard';
 
-interface ServerGameState {
-    gameId: string;
-    players: {
-        [playerId: string]: {
-            name: string;
-            peer: any; // Peer type is not easily available here
-        }
-    };
-    board: UltimateBoard;
-    currentPlayer: number;
-    nextBoard: number;
+const gameStateManager = new Map<string, GameState>();
+
+function sendIdentityMessage(peer: any, playerId: number, gameId: string, playerName: string) {
+    const identityMessage = JSON.stringify({
+        type: 'identity',
+        playerId,
+        gameId,
+        playerName
+    });
+    peer.send(identityMessage);
+
 }
 
-const gameManager = new Map<string, ServerGameState>();
-
-
-// this could be moved to domain for GameState?
-function validateMove(game: ServerGameState, index: number, boardId: number, playerId: number) {
+function validateMove(game: GameState, index: number, boardId: number, playerId: number) {
     if (playerId !== game.currentPlayer) {
         throw new Error(`Invalid move: Player ${playerId} is not the current player.`);
     }
@@ -39,47 +36,20 @@ function handleJoin(peer: any, data: any) {
     const gameId = data.gameId;
     const playerName = data.playerName;
 
-    const game = gameManager.get(gameId);
+    const game = gameStateManager.get(gameId);
     console.log(game)
     if (game) {
-        let playerId = 0;
-        // Check for reconnection
-        for (const token in game.players) {
-            if (game.players[token].name === playerName) {
-                playerId = parseInt(token);
-                console.log(`Player ${playerName} reconnecting as player ${playerId}`);
-                break;
-            }
+        const player = game.findOrCreatePlayerByName(playerName);
+        if (!player) {
+            console.log(`Player ${playerName} not found`);
+            return;
         }
 
-        // If not reconnecting, assign new token
-        if (playerId === 0) {
-            if (!game.players[1]) {
-                playerId = 1;
-            } else if (!game.players[2]) {
-                playerId = 2;
-            } else {
-                // Game full
-                const message = JSON.stringify({ type: 'error', message: 'Game is full' });
-                peer.send(message);
-                return;
-            }
-        }
-
-        game.players[playerId] = {
-            name: playerName,
-            peer: peer
-        };
         peer.subscribe(gameId);
 
         // Send identity to the joining player
-        const identityMessage = JSON.stringify({
-            type: 'identity',
-            playerId,
-            gameId,
-            playerName
-        });
-        peer.send(identityMessage);
+
+        sendIdentityMessage(peer, player.id, gameId, playerName);
 
         const message = JSON.stringify({
             type: 'playerJoined',
@@ -100,7 +70,7 @@ function handleJoin(peer: any, data: any) {
 }
 
 function handleCreate(peer: any, data: any) {
-    if (gameManager.has(data.gameId)) {
+    if (gameStateManager.has(data.gameId)) {
         const message = JSON.stringify({ type: 'error', message: 'Game already exists' });
         console.log(`Game ${data.gameId} already exists`);
         peer.publish(data.gameId, message);
@@ -113,31 +83,12 @@ function handleCreate(peer: any, data: any) {
     // game creator is player 1
     const playerId = 1;
 
-    const newGame: ServerGameState = {
-        gameId,
-        players: {
-            [playerId]: {
-                name: playerName,
-                peer: peer
-            }
-        },
-        board: new UltimateBoard(),
-        // board: initializeBoard(),
-        currentPlayer: playerId,
-        nextBoard: -1,
-    };
-
-    gameManager.set(gameId, newGame);
+    const player = new Player(playerId, playerName, playerId);
+    const newGame = new GameState(gameId, player, playerId);
+    gameStateManager.set(gameId, newGame);
     peer.subscribe(gameId);
 
-    // Send identity to the creator
-    const identityMessage = JSON.stringify({
-        type: 'identity',
-        playerId,
-        gameId,
-        playerName
-    });
-    peer.send(identityMessage);
+    sendIdentityMessage(peer, playerId, gameId, playerName);
 
     const message = JSON.stringify({
         type: 'gameStarted',
@@ -155,7 +106,7 @@ function handleMove(peer: any, data: any) {
     const move = data.move
     const gameId = move.gameId;
     const playerId = move.playerId;
-    const game = gameManager.get(gameId);
+    const game = gameStateManager.get(gameId);
     if (game && game.board) {
         try {
             validateMove(game, move.index, move.boardId, move.playerId);
@@ -169,8 +120,8 @@ function handleMove(peer: any, data: any) {
 
         const hasWon = game.board.checkWin(move.target);
 
-        game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
-        game.nextBoard = game.board.getNextBoard(move.index)
+        game.nextPlayer();
+        game.setNextBoard(move.index);
 
         const message = JSON.stringify({
             type: 'moveConfirmed',
@@ -202,11 +153,9 @@ function handleMove(peer: any, data: any) {
 
 function handleReset(peer: any, data: any) {
     const gameId = data.gameId;
-    const game = gameManager.get(gameId);
+    const game = gameStateManager.get(gameId);
     if (game) {
-        game.board = new UltimateBoard();
-        game.currentPlayer = 1;
-        game.nextBoard = -1;
+        game.reset();
         const message = JSON.stringify({
             type: 'boardReset',
             gameId,

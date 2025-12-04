@@ -9,3 +9,17 @@ export interface UltimateBoardDto {
     boards: SmallBoardDto[];
     winner: number;
 }
+
+export interface GameStateDto {
+    gameId: string;
+    players: Player[];
+    boardState: UltimateBoardDto;
+    currentPlayer: number;
+    nextBoard: number;
+}
+
+export interface Player {
+    id: number;
+    name: string;
+    token: number;
+}
