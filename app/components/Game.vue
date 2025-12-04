@@ -1,6 +1,6 @@
 <template>
-    <div class="board-page">
-        <div class="board-container">
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 gap-6 bg-gray-50">
+        <div class="w-full max-w-[min(90vh,90vw)] aspect-square relative">
             <TicTacToeBoard>
                 <SmallBoard 
                     v-for="(board, index) in boardState.boards" 
@@ -8,8 +8,35 @@
                     :board="board"
                 />
             </TicTacToeBoard>
+
+            <!-- Game Over Overlay -->
+            <div 
+                v-if="boardState.winner" 
+                class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm rounded-lg animate-in fade-in duration-300"
+            >
+                <h2 class="text-6xl md:text-8xl font-black text-white mb-8 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] tracking-wider">
+                    <span :class="boardState.winner === 1 ? 'text-red-500' : 'text-blue-500'">
+                        {{ boardState.winner === 1 ? 'X' : 'O' }}
+                    </span>
+                    WINS!
+                </h2>
+                <Button 
+                    size="lg" 
+                    class="font-bold text-xl px-10 py-6 shadow-xl hover:scale-105 transition-transform"
+                    @click="reset()"
+                >
+                    Play Again
+                </Button>
+            </div>
         </div>
-        <button class="new-game-btn" @click="reset()">New Game</button>
+        <Button 
+            v-if="!boardState.winner"
+            size="lg" 
+            class="font-bold text-lg px-8"
+            @click="reset()"
+        >
+            New Game
+        </Button>
     </div>
 </template>
 
@@ -19,6 +46,7 @@ import SmallBoard from '../components/SmallBoard.vue';
 import TicTacToeBoard from '../components/TicTacToeBoard.vue';
 import { useGameStore } from '../stores/gamemanager';
 import { useGameSocket } from '../composables/useGameSocket';
+import { Button } from '@/app/components/ui/button';
 
 const socket = useGameSocket();
 const {requestReset} = socket;
@@ -31,42 +59,3 @@ function reset() {
     requestReset(gameId.value);
 }
 </script>
-
-<style scoped>
-.board-page {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    gap: 1.5rem;
-    box-sizing: border-box;
-}
-
-.board-container {
-    width: 100%;
-    max-width: min(90vh, 90vw); /* Ensures board fits within viewport */
-    aspect-ratio: 1 / 1; /* Keeps the overall board square */
-}
-
-.new-game-btn {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-    font-weight: bold;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.new-game-btn:hover {
-    background-color: #45a049;
-}
-
-.new-game-btn:active {
-    background-color: #3d8b40;
-}
-</style>

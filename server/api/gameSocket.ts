@@ -166,8 +166,12 @@ function handleMove(peer: any, data: any) {
 
         game.board.update(move.boardId, move.index, move.target);
         console.log(game.board)
+
+        const hasWon = game.board.checkWin(move.target);
+
         game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
         game.nextBoard = game.board.getNextBoard(move.index)
+
         const message = JSON.stringify({
             type: 'moveConfirmed',
             gameId,
@@ -179,6 +183,17 @@ function handleMove(peer: any, data: any) {
         });
         peer.publish(gameId, message);
         peer.send(message);
+
+        if (hasWon) {
+            const gameOverMessage = JSON.stringify({
+                type: 'gameOver',
+                gameId,
+                winner: move.target,
+                board: game.board.getUltimateBoardDto(),
+            });
+            peer.publish(gameId, gameOverMessage);
+            peer.send(gameOverMessage);
+        }
     } else {
         // Handle error or create? For now just log
         console.log(`Game ${gameId} not found`);

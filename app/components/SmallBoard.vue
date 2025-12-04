@@ -1,8 +1,45 @@
+<template>
+    <div 
+        class="relative grid grid-cols-3 gap-0.5 bg-gray-200 p-0.5 transition-all duration-300"
+        :class="{
+            'ring-4 ring-yellow-400 ring-offset-2 z-10': isPlayable && !board.winner,
+            'opacity-50': !isPlayable && !board.winner,
+            'bg-red-100': board.winner === 1,
+            'bg-blue-100': board.winner === 2
+        }"
+    >
+        <SmallCell 
+            v-for="(cell, index) in board.board" 
+            :key="index" 
+            :token="valToToken(cell)"
+            :disabled="!isPlayable || !!board.winner || cell !== 0"
+            @cellClick="handleCellClick(board.index, index)"
+        />
+
+        <!-- Winner Overlay -->
+        <div 
+            v-if="board.winner" 
+            class="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]"
+        >
+            <span 
+                class="text-9xl font-black transform -rotate-12 drop-shadow-xl"
+                :class="{
+                    'text-red-600': board.winner === 1,
+                    'text-blue-600': board.winner === 2
+                }"
+            >
+                {{ valToToken(board.winner) }}
+            </span>
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
 import SmallCell from './SmallCell.vue';
 import { computed } from 'vue';
 import { useGameStore } from '../stores/gamemanager';
+import { useGameSocket } from '../composables/useGameSocket';
 import type { SmallBoardDto } from '~~/types/game';
 
 const props = defineProps<{ board: SmallBoardDto }>();
@@ -30,11 +67,3 @@ const handleCellClick = (boardId: number, index: number) => {
 }
 
 </script>
-
-<template>
-    <Board :isAvailable="board.isAvailable" :winner="board.winner" :isPlayable="isPlayable">
-        <SmallCell v-for="(cell, index) in board.board" :key="index" :token="valToToken(cell)" i
-        @cellClick="handleCellClick(board.index, index)">
-        </SmallCell>
-    </Board>
-</template>

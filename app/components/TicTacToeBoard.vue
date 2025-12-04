@@ -1,5 +1,5 @@
 <template>
-  <div class="tictactoe-board-container">
+  <div class="grid grid-cols-3 gap-1 bg-gray-800 border-4 border-gray-800 rounded-lg overflow-hidden shadow-2xl">
     <slot></slot>
   </div>
 </template>
@@ -7,13 +7,3 @@
 <script setup lang="ts">
 // No logic here, just structural layout.
 </script>
-
-<style scoped>
-.tictactoe-board-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
-  /* Ensure the container itself has no gap/padding that would break the lines */
-  gap: 0; 
-  border: 1px solid #333; /* Optional: Outer border for the whole board */
-}
-</style>

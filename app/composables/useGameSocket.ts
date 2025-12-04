@@ -73,7 +73,8 @@ export function useGameSocket() {
         }
         if (message.type === 'gameOver') {
             console.log('Game over');
-            toast.success('Game Over!');
+            const winnerName = message.winner === 1 ? 'Player 1 (X)' : 'Player 2 (O)';
+            toast.success(`Game Over! ${winnerName} Wins!`);
         }
 
         // CREATE AND JOIN GAME SHOULD BE HANDELED AND SYNC BOARD STATE?
