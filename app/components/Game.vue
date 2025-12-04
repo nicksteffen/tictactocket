@@ -13,6 +13,7 @@
         <div v-else class="p-3 bg-indigo-100 border border-indigo-300 text-indigo-800 rounded-lg text-center font-medium" >
             It's the other player's turn.
         </div>
+        </div>
 
         <div class="w-full max-w-[min(90vh,90vw)] aspect-square relative">
             <TicTacToeBoard>
