@@ -13,6 +13,7 @@
             :key="index" 
             :token="valToToken(cell)"
             :disabled="!isPlayable || !!board.winner || cell !== 0"
+            :highlight="lastMoveIndex === index"
             @cellClick="handleCellClick(board.index, index)"
         />
 
@@ -46,6 +47,12 @@ const props = defineProps<{ board: SmallBoardDto, isAI?: boolean }>();
 const gameStore = useGameStore();
 const gameId = computed(() => gameStore.gameId);
 const {requestAIMove, requestMove } = useGameSocket();
+const lastMoveIndex = computed(() => {
+    if (gameStore.lastMove?.boardId === props.board.index) {
+        return gameStore.lastMove.index;
+    }
+    return -1;
+});
 
 const valToToken = (val: Number) => {
     if (val === 1) return 'X';

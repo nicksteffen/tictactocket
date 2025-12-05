@@ -1,6 +1,6 @@
 import type { UseWebSocketReturn } from '@vueuse/core';
 import { defineStore } from 'pinia';
-import type { Alert, UltimateBoardDto } from '~~/types/game';
+import type { Alert, Move, UltimateBoardDto } from '~~/types/game';
 
 
 export interface gameState {
@@ -24,6 +24,7 @@ export const useGameStore = defineStore('game', {
         boardState: {} as UltimateBoardDto,
         alerts: [] as Alert[],
         isAI: false,
+        lastMove: {} as Move,
 
     }),
     actions: {
@@ -50,6 +51,9 @@ export const useGameStore = defineStore('game', {
         },
         setPlayerToken(token: number) {
             this.playerId = token;
+        },
+        setLastMove(move: Move) {
+            this.lastMove = move;
         },
         createGame(gameId: string, playerName: string, boardState: UltimateBoardDto) {
             this.gameId = gameId;

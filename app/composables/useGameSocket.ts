@@ -1,7 +1,7 @@
 
 import { useWebSocket } from "@vueuse/core";
 import { toast } from "vue-sonner";
-import type { Alert } from "~~/types/game";
+import type { Alert, Move } from "~~/types/game";
 
 type GameId = string;
 type PlayerName = string;
@@ -49,6 +49,8 @@ export function useGameSocket() {
     const gameStore = useGameStore();
 
     watch(data, (newData) => {
+        console.log("data received");
+        console.log(newData);
         const message = JSON.parse(newData);
         if (message.type === 'error') {
             console.log("error received");
@@ -61,11 +63,22 @@ export function useGameSocket() {
             gameStore.addAlert(alert);
         }
         if (message.type === 'moveConfirmed') {
+            console.log("move confirmed");
+            const lastMove: Move = message.move;
+            gameStore.setLastMove(lastMove);
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
         }
         if (message.type === 'boardReset') {
             console.log("board reset")
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
+            const emptyLastMove: Move = {
+                gameId: message.gameId,
+                boardId: -1,
+                index: -1,
+                target: -1,
+                playerId: -1,
+            };
+            gameStore.setLastMove(emptyLastMove);
             toast.info('Board reset');
             gameStore.addAlert({
                 type: 'info',

@@ -1,6 +1,7 @@
 import { UltimateBoard } from "./UltimateBoard";
 import { SmallBoard } from "./SmallBoard";
 import { checkOverallWin, checkSendingToCriticalBoard, checkSendingToWonOrDrawBoard, checkSmallBoardBlock, checkSmallBoardWin, checkOverallBlock, isWinningMove } from "./AIHelper";
+import { Move } from "~~/types/game";
 const WIN_CONDITIONS = [
     [0, 1, 2], // Top row
     [3, 4, 5], // Middle row
@@ -14,10 +15,6 @@ const WIN_CONDITIONS = [
 
 
 // Define the return type for the move
-export type Move = {
-    boardId: number;
-    cellIndex: number;
-} | null;
 
 const PLAYER_VALUE = 1;
 const OPPONENT_VALUE = 2;
@@ -30,12 +27,26 @@ const OPPONENT_VALUE = 2;
  * @returns An object containing the boardId and cellIndex, or null if no move is available.
  */
 export function getHeuristicMove(
+    gameId: string,
     ultimateBoard: UltimateBoard,
     nextBoardId: number,
     targetPlayer: number
 ): Move {
+    const move: Move = {
+        gameId: gameId,
+        boardId: -1,
+        index: -1,
+        target: -1,
+        playerId: targetPlayer,
+    };
 
     // Determine which boards are available to play on
+    console.log("find available boards")
+    console.log("next board id: ")
+    console.log(nextBoardId)
+    // console.log("ultimate board: ")
+    // console.log(ultimateBoard)
+    // const availableBoardIds = [0,1,2,3,4,5,6,7,8]
     const availableBoardIds = nextBoardId === -1
         ? ultimateBoard.boards
             .filter(b => b.isAvailable && b.winner === 0)
@@ -43,9 +54,16 @@ export function getHeuristicMove(
         : ultimateBoard.boards[nextBoardId].isAvailable && ultimateBoard.boards[nextBoardId].winner === 0
             ? [nextBoardId]
             : [];
+    console.log("available boards: ")
+    console.log(availableBoardIds);
 
     if (availableBoardIds.length === 0) {
-        return null; // No available boards
+        move.boardId = -1;
+        move.index = -1;
+        move.target = -1;
+        move.playerId = -1;
+        console.log("no available boards")
+        return move; // No available boards
     }
 
     // --- HEURISTIC STRATEGY PRIORITY ---
@@ -69,8 +87,13 @@ export function getHeuristicMove(
         checkSendingToWonOrDrawBoard,
         checkSendingToCriticalBoard,
     ]) {
-        const move = rule(ultimateBoard, availableBoardIds, targetPlayer);
-        if (move) return move;
+        const moveCoordinates = rule(ultimateBoard, availableBoardIds, targetPlayer);
+        if (moveCoordinates.boardId !== -1 && moveCoordinates.cellIndex !== -1) {
+            move.boardId = moveCoordinates.boardId;
+            move.index = moveCoordinates.cellIndex;
+            move.playerId = targetPlayer;
+            return move;
+        }
     }
 
     // If no strong tactical move, rely on positional heuristics
@@ -78,19 +101,24 @@ export function getHeuristicMove(
         const board = ultimateBoard.boards[boardId];
 
         // 7. Center
-        if (board.board[4] === 0) return { boardId, cellIndex: 4 };
+        move.boardId = boardId;
+        move.index = 4;
+        move.playerId = targetPlayer;
+        if (board.board[4] === 0) return move;
 
         // 8. Corners
         for (const cellIndex of [0, 2, 6, 8]) {
-            if (board.board[cellIndex] === 0) return { boardId, cellIndex };
+            move.index = cellIndex;
+            if (board.board[cellIndex] === 0) return move;
         }
 
         // 9. Any edge cell (Last resort)
         for (const cellIndex of [1, 3, 5, 7]) {
-            if (board.board[cellIndex] === 0) return { boardId, cellIndex };
+            move.index = cellIndex;
+            if (board.board[cellIndex] === 0) return move;
         }
     }
 
-    return null; // Should not happen if availableBoardIds is not empty
+    return move; // Should not happen if availableBoardIds is not empty
 }
 

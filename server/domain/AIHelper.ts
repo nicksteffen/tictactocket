@@ -1,5 +1,6 @@
-import { Move } from "./AIPlayer";
 import { UltimateBoard } from "./UltimateBoard";
+import { MoveCoordinates } from "~~/types/game";
+
 const WIN_CONDITIONS = [
     [0, 1, 2], // Top row
     [3, 4, 5], // Middle row
@@ -24,7 +25,7 @@ export function isWinningMove(board: number[], index: number, target: number): b
 }
 
 // 1. & 2. Overall Win/Block Check
-export function checkOverallWin(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): Move {
+export function checkOverallWin(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): MoveCoordinates {
     const opponent = player === 1 ? 2 : 1;
     const overallBoard = ultimateBoard.boards.map(b => b.winner);
     
@@ -47,11 +48,11 @@ export function checkOverallWin(ultimateBoard: UltimateBoard, availableBoardIds:
             }
         }
     }
-    return null;
+    return { boardId: -1, cellIndex: -1 };
 }
 
 // 3. & 4. Small Board Win/Block Check
-export function checkSmallBoardWin(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): Move {
+export function checkSmallBoardWin(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): MoveCoordinates {
     const opponent = player === 1 ? 2 : 1;
     
     // Priority: Win a small board
@@ -66,10 +67,10 @@ export function checkSmallBoardWin(ultimateBoard: UltimateBoard, availableBoardI
             }
         }
     }
-    return null;
+    return { boardId: -1, cellIndex: -1 };
 }
 
-export function checkSmallBoardBlock(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): Move {
+export function checkSmallBoardBlock(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): MoveCoordinates {
     const opponent = player === 1 ? 2 : 1;
     
     // Priority: Block opponent's small board win
@@ -84,11 +85,11 @@ export function checkSmallBoardBlock(ultimateBoard: UltimateBoard, availableBoar
             }
         }
     }
-    return null;
+    return { boardId: -1, cellIndex: -1 };
 }
 
 // 5. & 6. Sending Opponent Strategy
-export function checkSendingToWonOrDrawBoard(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): Move {
+export function checkSendingToWonOrDrawBoard(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): MoveCoordinates {
     // Look for a move that sends the opponent to a board that is already resolved (won/drawn)
     for (const boardId of availableBoardIds) {
         const smallBoard = ultimateBoard.boards[boardId];
@@ -102,10 +103,10 @@ export function checkSendingToWonOrDrawBoard(ultimateBoard: UltimateBoard, avail
             }
         }
     }
-    return null;
+    return { boardId: -1, cellIndex: -1 };
 }
 
-export function checkSendingToCriticalBoard(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): Move {
+export function checkSendingToCriticalBoard(ultimateBoard: UltimateBoard, availableBoardIds: number[], player: number): MoveCoordinates {
     // Look for a move that sends the opponent to a less strategic board (e.g., edge, not center/corner)
     // The opposite of this is to send them to a non-critical board, but since all open boards are dangerous,
     // this heuristic often means avoiding sending them to the central board (index 4) or a corner (0, 2, 6, 8) 
@@ -121,7 +122,7 @@ export function checkSendingToCriticalBoard(ultimateBoard: UltimateBoard, availa
             }
         }
     }
-    return null;
+    return { boardId: -1, cellIndex: -1 };
 
 }
 
@@ -137,7 +138,7 @@ export function checkOverallBlock(
     ultimateBoard: UltimateBoard,
     availableBoardIds: number[],
     player: number
-): Move {
+): MoveCoordinates {
     const opponent = player === 1 ? 2 : 1;
     const overallBoard = ultimateBoard.boards.map(b => b.winner);
 
@@ -201,5 +202,5 @@ export function checkOverallBlock(
             }
         }
     }
-    return null;
+    return { boardId: -1, cellIndex: -1 };
 }

@@ -30,3 +30,16 @@ interface Alert {
     details?: string;
     timestamp?: string;
 }
+
+interface Move {
+    gameId: string;
+    boardId: number;
+    index: number;
+    target: number;
+    playerId: number;
+}
+
+interface MoveCoordinates {
+    boardId: number;
+    cellIndex: number;
+}

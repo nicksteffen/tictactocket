@@ -15,6 +15,9 @@
         </div>
         </div>
 
+        <Button @click="testPanelOpen = !testPanelOpen">Toggle Test Panel</Button>
+        <TestPanel :isOpen="testPanelOpen" />
+
         <div class="w-full max-w-[min(90vh,90vw)] aspect-square relative">
             <TicTacToeBoard>
                 <SmallBoard 
@@ -66,8 +69,8 @@ import TicTacToeBoard from '../components/TicTacToeBoard.vue';
 import { useGameStore } from '../stores/gamemanager';
 import { useGameSocket } from '../composables/useGameSocket';
 import { Button } from '../components/ui/button';
-import {Switch } from '../components/ui/switch';
 
+const testPanelOpen = ref(false);
 const socket = useGameSocket();
 const {requestReset} = socket;
 const gameStore = useGameStore();
