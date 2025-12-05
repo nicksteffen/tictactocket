@@ -41,12 +41,6 @@ export function getHeuristicMove(
     };
 
     // Determine which boards are available to play on
-    console.log("find available boards")
-    console.log("next board id: ")
-    console.log(nextBoardId)
-    // console.log("ultimate board: ")
-    // console.log(ultimateBoard)
-    // const availableBoardIds = [0,1,2,3,4,5,6,7,8]
     const availableBoardIds = nextBoardId === -1
         ? ultimateBoard.boards
             .filter(b => b.isAvailable && b.winner === 0)
@@ -54,15 +48,11 @@ export function getHeuristicMove(
         : ultimateBoard.boards[nextBoardId].isAvailable && ultimateBoard.boards[nextBoardId].winner === 0
             ? [nextBoardId]
             : [];
-    console.log("available boards: ")
-    console.log(availableBoardIds);
-
     if (availableBoardIds.length === 0) {
         move.boardId = -1;
         move.index = -1;
         move.target = -1;
         move.playerId = -1;
-        console.log("no available boards")
         return move; // No available boards
     }
 

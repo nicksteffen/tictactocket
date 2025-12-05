@@ -14,7 +14,6 @@ export default defineWebSocketHandler({
         console.log('WebSocket connection closed');
     },
     message(peer, message) {
-        console.log('WebSocket message received:', message);
         const data = JSON.parse(message.text());
 
         if (data.type === 'join') {
@@ -30,7 +29,6 @@ export default defineWebSocketHandler({
             handleReset(peer, data, gameStateManager);
         }
         if (data.type === 'aiMove') {
-            console.log("ai move handler if block");
             handleAIMove(peer, data, gameStateManager);
         }
     },

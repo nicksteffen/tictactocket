@@ -54,12 +54,10 @@ export class GameState {
             const player = this.players.get(token)
             if (player && player.name === name) {
                 playerId = player.id;
-                console.log(`Player ${name} reconnecting as player ${playerId}`);
                 break;
             }
         }
         if (playerId !== 0) {
-            console.log("returning player")
             return this.findPlayer(playerId) as Player;
         }
 
@@ -71,7 +69,6 @@ export class GameState {
                 playerId = 2;
             } else {
                 // Game full
-                console.log('Game is full');
                 throw new Error('Game is full');
             }
         }

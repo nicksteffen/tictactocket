@@ -18,10 +18,7 @@ export class SmallBoard {
         this.maxCols = 3;
     }
     checkWin(target: number) {
-        console.log("small board check win")
-        // if (this.board.every((index) => this.board[index] === target)) {
         if (checkIfWon(this.board, target)) {
-            console.log("small board won")
             this.winner = target;
             this.isAvailable = false;
         }
@@ -34,7 +31,6 @@ export class SmallBoard {
         return this.isAvailable;
     }
     update(index: number, target: number) {
-        console.log("in SmallBoard class, small board update method")
         this.board[index] = target;
         const winner = this.checkWin(target);
         if (!winner) {
@@ -47,8 +43,6 @@ export class SmallBoard {
         if (!this.isAvailable) {
             throw new Error('Invalid move: This board is not available for play.');
         }
-        console.log("small board validate move")
-        console.log(this.board[index])
         if (this.board[index] !== 0) {
             throw new Error('Invalid move: Cell is already occupied.');
         }

@@ -38,9 +38,7 @@ let instance: GameSocketInstance | null = null;
 export function useGameSocket() {
     // const url = 'ws://localhost:3000/api/gameSocket';
     const url = "/api/gameSocket";
-    console.log("useGameSocket");
     if (instance) {
-        console.log("instance already exists");
         return instance;
     }
     const socket = useWebSocket(url);
@@ -49,12 +47,8 @@ export function useGameSocket() {
     const gameStore = useGameStore();
 
     watch(data, (newData) => {
-        console.log("data received");
-        console.log(newData);
         const message = JSON.parse(newData);
         if (message.type === 'error') {
-            console.log("error received");
-            console.log(message.message);
             const alert: Alert = {
                 type: 'error',
                 message: message.message,
@@ -63,13 +57,11 @@ export function useGameSocket() {
             gameStore.addAlert(alert);
         }
         if (message.type === 'moveConfirmed') {
-            console.log("move confirmed");
             const lastMove: Move = message.move;
             gameStore.setLastMove(lastMove);
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
         }
         if (message.type === 'boardReset') {
-            console.log("board reset")
             gameStore.syncBoardState(message.board, message.nextBoard, message.currentPlayer);
             const emptyLastMove: Move = {
                 gameId: message.gameId,
@@ -88,7 +80,6 @@ export function useGameSocket() {
         }
         if (message.type === 'playerJoined') {
             gameStore.joinGame(message.gameId, message.playerName, message.board);
-            console.log(message.playerName + ' joined the game');
             gameStore.addAlert({
                 type: 'success',
                 message: `${message.playerName} joined the game`,
@@ -96,15 +87,12 @@ export function useGameSocket() {
             });
         }
         if (message.type === 'playerLeft') {
-            console.log(message.playerName + ' left the game');
             gameStore.addAlert({
                 type: 'info',
                 message: `${message.playerName} left the game`,
             });
         }
         if (message.type === 'gameStarted') {
-            console.log('Game started');
-            console.log(message.board)
             gameStore.createGame(message.gameId, message.playerName, message.board);
             gameStore.addAlert({
                 type: 'success',
@@ -112,11 +100,9 @@ export function useGameSocket() {
             });
         }
         if (message.type === 'identity') {
-            console.log('Identity received: ' + message.playerId);
             gameStore.setPlayerToken(message.playerId);
         }
         if (message.type === 'gameOver') {
-            console.log('Game over');
             const winnerName = message.winner === 1 ? 'Player 1 (X)' : 'Player 2 (O)';
             gameStore.addAlert({
                 type: 'success',
@@ -145,7 +131,6 @@ export function useGameSocket() {
 
     function requestAIMove(gameId: string, boardId: number, index: number, target: number, playerId: number) {
         // we send the players move, and then let the ai respond
-        console.log("requesting ai move");
         const move = {
             gameId: gameId,
             boardId: boardId,

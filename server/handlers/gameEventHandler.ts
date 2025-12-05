@@ -17,10 +17,7 @@ function processPlayerMove(peer: any, game: GameState, move: Move) {
         return;
     }
 
-    console.log(`player move ${move.playerId} boardId ${move.boardId} index ${move.index} target ${move.target}`)
     game.board.update(move.boardId, move.index, move.target);
-    console.log("board updated")
-    console.log(game.board.boards[move.boardId].board)
     const hasWon = game.board.checkWin(move.target);
 
     // 3. Prepare next turn
@@ -37,8 +34,6 @@ function processPlayerMove(peer: any, game: GameState, move: Move) {
         nextBoard: game.nextBoard,
         currentPlayer: game.currentPlayer
     });
-    console.log("sending player moveu")
-    console.log(message)
     peer.publish(game.gameId, message);
     peer.send(message);
 
@@ -74,12 +69,10 @@ export function handleReset(peer: any, data: any, gameStateManager : GameStateMa
 
 export function handleJoin(peer: any, data: any, gameStateManager: GameStateManager) {
 
-    console.log('Joining game ' + data.gameId);
     const gameId = data.gameId;
     const playerName = data.playerName;
 
     const game = gameStateManager.get(gameId);
-    console.log(game)
     if (game) {
         let player : Player;
         try {
@@ -89,14 +82,12 @@ export function handleJoin(peer: any, data: any, gameStateManager: GameStateMana
             sendErrorMessage(peer, msg);
             return;
         }
-        console.log(player)
 
         peer.subscribe(gameId);
 
         // Send identity to the joining player
 
         sendIdentityMessage(peer, player.id, gameId, playerName);
-        console.log("sent Identity")
 
         const message = JSON.stringify({
             type: 'playerJoined',
@@ -106,12 +97,9 @@ export function handleJoin(peer: any, data: any, gameStateManager: GameStateMana
             currentPlayer: game.currentPlayer,
             nextBoard: game.nextBoard
         });
-        console.log("sent player joined")
         peer.publish(gameId, message);
         peer.send(message);
     } else {
-        // Handle error or create? For now just log
-        console.log(`Game ${gameId} not found`);
         sendErrorMessage(peer, `Game ${gameId} not found`);
     }
 }
@@ -121,7 +109,6 @@ export function handleCreate(peer: any, data: any, gameStateManager : GameStateM
         sendErrorMessage(peer, `Game ${data.gameId} already exists`);
         return;
     }
-    console.log('Creating game ' + data.gameId);
     const gameId = data.gameId;
     const playerName = data.playerName;
     // game creator is player 1
@@ -170,9 +157,6 @@ export function handleMove(peer: any, data: any, stateManager: GameStateManager)
 
 // Example of exporting handleAIMove
 export function handleAIMove(peer: any, data: any, stateManager: GameStateManager) {
-    console.log('====================')
-    console.log("Handle Ai Move");
-    console.log('====================')
     const move = data.move;
     const gameId = move.gameId;
     const game = stateManager.get(gameId);
@@ -182,9 +166,6 @@ export function handleAIMove(peer: any, data: any, stateManager: GameStateManage
         return;
     }
     
-    console.log("got game with board");
-    console.log(game.board)
-
     const opponent = move.playerId === 1 ? 2 : 1;
     
     // 1. Process the HUMAN player's move first
@@ -201,12 +182,7 @@ export function handleAIMove(peer: any, data: any, stateManager: GameStateManage
     }
 
     // 2. Get AI move
-    console.log("get aiMove");
-    // console.log("game board")
-    // console.log(game.board)
     const aimove: Move = getHeuristicMove(gameId, game.board, game.nextBoard, opponent);
-    console.log("ai move");
-    console.log(aimove)
 
     if (aimove) {
         const aiMoveData = {
@@ -219,7 +195,6 @@ export function handleAIMove(peer: any, data: any, stateManager: GameStateManage
         
         // 3. Process the AI player's move
         try {
-            console.log("process ai move");
             processPlayerMove(peer, game, aiMoveData);
         } catch (e) {
             console.error('AI move failed:', e);
